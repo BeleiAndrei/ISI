@@ -79,6 +79,7 @@ require([
                 map: map,
                 layerInfos: legendLayers
             }, "legend");
+            
             legendDijit.startup();
 
             request.get("/hotspots", {
@@ -219,7 +220,6 @@ require([
             so2 = $('.add_so2').val();
             o3 = $('.add_o3').val();
             no2 = $('.add_no2').val();
-            console.log("Data: ", pm10, so2, o3, no2);
 
             request.post("/incidents", {
                 data: {
