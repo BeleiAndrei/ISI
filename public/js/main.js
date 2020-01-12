@@ -15,6 +15,7 @@ require([
     'esri/Color',
     'dojo/request',
     'esri/geometry/Point',
+    "dojo/dom-construct",
     "dojo/domReady!"
 ], function (
     parser,
@@ -32,7 +33,8 @@ require([
     SimpleLineSymbol,
     Color,
     request,
-    Point
+    Point,
+    domConstruct
 ) {
     ready(function () {
 
@@ -49,7 +51,9 @@ require([
         let incidents = [];
         var limits = [];
         var allPoints = [];
-        let currentMap = 0
+        let currentMap = 0;
+        var legendLayers;
+        var legendDijit;
         var maps = [
             {
                 description: 'Level of pollution',
@@ -57,19 +61,19 @@ require([
             },
             {
                 description: 'PM10',
-                map: '81138e27937b44d1a5b009fa63f2233c'
+                map: '46148eab5bef401d82e5d8199d221d86'
             },
             {
                 description: 'SO2',
-                map: '81138e27937b44d1a5b009fa63f2233c'
+                map: '14951d07eb0945f2b83e96d33ad23231'
             },
             {
                 description: 'O3',
-                map: '81138e27937b44d1a5b009fa63f2233c'
+                map: '5fa014a84990495ab9c2aec0b819fc9e'
             },
             {
                 description: 'NO2',
-                map: '81138e27937b44d1a5b009fa63f2233c'
+                map: '81943bdc1ff241769bef14b509959805'
             }
         ]
 
@@ -97,8 +101,8 @@ require([
             //add the legend. Note that we use the utility method getLegendLayers to get
             //the layers to display in the legend from the createMap response.
 
-            var legendLayers = arcgisUtils.getLegendLayers(response);
-            var legendDijit = new Legend({
+            legendLayers = arcgisUtils.getLegendLayers(response);
+            legendDijit = new Legend({
                 map: map,
                 layerInfos: legendLayers
             }, "legend");
@@ -130,18 +134,6 @@ require([
         );
 
         function handleMapExtraActions(map) {
-
-            var myPoint = new Point(28.0079945, 45.4353208);
-            var symbol0 = new SimpleMarkerSymbol().setColor(new Color('blue'));
-            var graphic = new Graphic(myPoint, symbol0);
-            map.graphics.add(graphic);
-            limits.push({name: "Semlac", longitude: 21.108430175781148, latitude: 46.27374974057721});
-
-            myPoint = new Point(22.352631835936794, 46.00922633069789);
-            symbol0 = new SimpleMarkerSymbol().setColor(new Color('blue'));
-            graphic = new Graphic(myPoint, symbol0);
-            map.graphics.add(graphic);
-            limits.push({name: "Petris", longitude: 22.352631835936794, latitude: 46.00922633069789});
 
             toggleNitrateLayer();
             toggleCatchmentLayer();
@@ -293,20 +285,69 @@ require([
         });
 
         $(document).on("change", "#slt_country", function(e) {
-            //Get select object
-            // var objSelect = document.getElementById("Mobility");
+            currentMap = document.getElementsByName("country")[0].value
+            map.destroy();
+            arcgisUtils.createMap(maps[currentMap].map, "map", {
+                mapOptions: {
+                    center: [28.0079945, 45.4353208],
+                    zoom:13
+                }}).then(function (response) {
+                //update the app
+                dom.byId("title").innerHTML = response.itemInfo.item.title;
+                dom.byId("subtitle").innerHTML = response.itemInfo.item.snippet;
+    
+                map = response.map;
+    
+                //add the scalebar
+                var scalebar = new Scalebar({
+                    map: map,
+                    scalebarUnit: "english"
+                });
+    
+                //add the legend. Note that we use the utility method getLegendLayers to get
+                //the layers to display in the legend from the createMap response.
+
+                // destroy previous legend, if present
+                if (legendDijit) {
+                    legendDijit.destroy();
+                    domConstruct.destroy(dojo.byId("legend"));
+                }
+                // create a new div for the legend
+                var legendDiv = domConstruct.create("div", {
+                    id: "legend"
+                }, dom.byId("rightPane"));
             
-            // //Set selected
-            // setSelectedValue(objSelect, "10");
-            console.log(document.getElementsByName("country")[0].value)
-            // function setSelectedValue(selectObj, valueToSet) {
-            //     for (var i = 0; i < selectObj.options.length; i++) {
-            //         if (selectObj.options[i].text== valueToSet) {
-            //             selectObj.options[i].selected = true;
-            //             return;
-            //         }
-            //     }
-            // }
+                legendLayers = arcgisUtils.getLegendLayers(response);
+
+                legendDijit= new Legend({
+                    map: map,
+                    layerInfos: legendLayers
+                }, legendDiv);
+
+                legendDijit.startup();
+
+                // if (legendDijit) legendDijit.destroyRecursive();
+    
+                // legendLayers = arcgisUtils.getLegendLayers(response);
+                // legendDijit = new Legend({
+                //     map: map,
+                //     layerInfos: legendLayers
+                // }, "legend");
+    
+                // legendDijit.startup();
+    
+                request.get("/hotspots", {
+                    handleAs: "json"
+                }).then(function(dataLocations) {
+                    for (let i = 0; i < dataLocations.length; i++) {
+                        hotspots.push(dataLocations[i]);
+                    }
+                    console.log("Hotspots: ", dataLocations)
+                })
+    
+                handleMapExtraActions(map);
+                displayAllIncidents();
+            });
         })
 
         $(document).on("click", ".mark-as-solved", function(e) {
