@@ -1,11 +1,11 @@
 .desc_main {
     color: #f8f9fa;
-    background-color: rgba(0,0,0,.8);
+    background-color: #ff9900;
     font-size: 1.5rem;
 }
 
 #mainNav {
-    background-color: rgba(0,0,0,.8);
+    background-color: #ff9900;
 }
 
 .nav-item .logging {
@@ -24,6 +24,31 @@
     color: #fff;
 }
 
+
+#mainNav .selectBox{
+    border-radius:36px;
+    display:inline-block;
+    overflow:hidden;
+    background:#cccccc;
+    border:1px solid #cccccc;
+}
+
+#mainNav .navbar-brand {
+    text-align: center;
+    margin-left: 35%;
+      /* Firefox */
+    display: -moz-box;
+    -moz-box-pack: center;
+    -moz-box-align: center;
+    /* Safari and Chrome */
+    display: -webkit-box;
+    -webkit-box-pack: center;
+    -webkit-box-align: center;
+    /* W3C */
+    display: box;
+    box-pack: center;
+    box-align: center;
+}
 
 .panel {
     border-radius: 5px;
@@ -94,6 +119,7 @@ label {
     font-size: 20px;
     font-weight: 300;
     margin: 30px;
+    border-bottom: 5px solid #ff9900;
 }
 .panel-login>.panel-heading {
     color: #848c9d;
@@ -113,11 +139,13 @@ label {
 .panel-login>.panel-heading .login {
     padding: 20px 30px;
     border-bottom-leftt-radius: 5px;
+    text-align: center;
 }
 .panel-login>.panel-heading .register {
     padding: 20px 30px;
-    background: #2d3b55;
+    background: #ff9900;
     border-bottom-right-radius: 5px;
+    text-align: center;
 }
 .panel-login>.panel-heading a{
     text-decoration: none;
@@ -175,7 +203,7 @@ label {
 .btn-login:hover,
 .btn-login:focus {
     color: #fff;
-    background-color: #2D3B55;
+    background-color: #ff9900;
 }
 .forgot-password {
     text-decoration: underline;
@@ -203,7 +231,7 @@ label {
 .btn-register:hover,
 .btn-register:focus {
     color: #fff;
-    background-color: #2D3B55;
+    background-color: #ff9900;
 }
 
 .modal.show .modal-dialog {

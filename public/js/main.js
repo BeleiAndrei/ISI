@@ -15,6 +15,7 @@ require([
     'esri/Color',
     'dojo/request',
     'esri/geometry/Point',
+    "dojo/dom-construct",
     "dojo/domReady!"
 ], function (
     parser,
@@ -32,7 +33,8 @@ require([
     SimpleLineSymbol,
     Color,
     request,
-    Point
+    Point,
+    domConstruct
 ) {
     ready(function () {
 
@@ -45,15 +47,41 @@ require([
             point = null,
             lastClickedPoint = null;
         var issues = [];
+        let hotspots = [];
         let incidents = [];
         var limits = [];
         var allPoints = [];
+        let currentMap = 0;
+        var legendLayers;
+        var legendDijit;
+        var maps = [
+            {
+                description: 'Level of pollution',
+                map: '81138e27937b44d1a5b009fa63f2233c'
+            },
+            {
+                description: 'PM10',
+                map: '46148eab5bef401d82e5d8199d221d86'
+            },
+            {
+                description: 'SO2',
+                map: '14951d07eb0945f2b83e96d33ad23231'
+            },
+            {
+                description: 'O3',
+                map: '5fa014a84990495ab9c2aec0b819fc9e'
+            },
+            {
+                description: 'NO2',
+                map: '81943bdc1ff241769bef14b509959805'
+            }
+        ]
 
         parser.parse();
 
         //if accessing webmap from a portal outside of ArcGIS Online, uncomment and replace path with portal URL
         //arcgisUtils.arcgisUrl = "https://pathto/portal/sharing/content/items";
-        arcgisUtils.createMap("81138e27937b44d1a5b009fa63f2233c", "map", {
+        arcgisUtils.createMap(maps[0].map, "map", {
             mapOptions: {
                 center: [28.0079945, 45.4353208],
                 zoom:13
@@ -72,12 +100,23 @@ require([
 
             //add the legend. Note that we use the utility method getLegendLayers to get
             //the layers to display in the legend from the createMap response.
-            var legendLayers = arcgisUtils.getLegendLayers(response);
-            // var legendDijit = new Legend({
-            //     map: map,
-            //     layerInfos: legendLayers
-            // }, "legend");
-            // legendDijit.startup();
+
+            legendLayers = arcgisUtils.getLegendLayers(response);
+            legendDijit = new Legend({
+                map: map,
+                layerInfos: legendLayers
+            }, "legend");
+
+            legendDijit.startup();
+
+            request.get("/hotspots", {
+                handleAs: "json"
+            }).then(function(dataLocations) {
+                for (let i = 0; i < dataLocations.length; i++) {
+                    hotspots.push(dataLocations[i]);
+                }
+                console.log("Hotspots: ", dataLocations)
+            })
 
             handleMapExtraActions(map);
             displayAllIncidents();
@@ -95,18 +134,6 @@ require([
         );
 
         function handleMapExtraActions(map) {
-
-            var myPoint = new Point(28.0079945, 45.4353208);
-            var symbol0 = new SimpleMarkerSymbol().setColor(new Color('blue'));
-            var graphic = new Graphic(myPoint, symbol0);
-            map.graphics.add(graphic);
-            limits.push({name: "Semlac", longitude: 21.108430175781148, latitude: 46.27374974057721});
-
-            myPoint = new Point(22.352631835936794, 46.00922633069789);
-            symbol0 = new SimpleMarkerSymbol().setColor(new Color('blue'));
-            graphic = new Graphic(myPoint, symbol0);
-            map.graphics.add(graphic);
-            limits.push({name: "Petris", longitude: 22.352631835936794, latitude: 46.00922633069789});
 
             toggleNitrateLayer();
             toggleCatchmentLayer();
@@ -146,7 +173,9 @@ require([
                                "</form> ";
 
                     map.infoWindow.setContent(form);
-                    map.infoWindow.show(evt.mapPoint);
+                    if (!isHotspot(latitude, longitude)) {
+                        map.infoWindow.show(evt.mapPoint);
+                    }
                 }
 
                 var customLayer = $("#map_graphics_layer circle");
@@ -155,8 +184,8 @@ require([
                     var ok = false;
                     var i = 0;
                     for (i = 0; i < incidents.length; i++) {
-                        if((incidents[i].Latitude <= (latitude + 0.013) && incidents[i].Latitude >= (latitude - 0.013))
-                            && (incidents[i].Longitude <= (longitude + 0.013) && incidents[i].Longitude >= (longitude - 0.013))) {
+                        if((incidents[i].Latitude <= (latitude + 0.003) && incidents[i].Latitude >= (latitude - 0.003))
+                            && (incidents[i].Longitude <= (longitude + 0.003) && incidents[i].Longitude >= (longitude - 0.003))) {
                             ok = true;
                             break;
                         }
@@ -166,8 +195,10 @@ require([
                     if (ok === true) {
 
                         var isAdmin = $("#user_logout").data("isadmin");
-                        var markAsSolvedButton = isAdmin ? "<button class='mark-as-solved btn btn-warning' data-id='" + incidents[i].ID +
-                            "'>Mark as verified</button>" : "";
+                        var markAsSolvedButton = isAdmin ? 
+                            "<button class='mark-as-solved btn btn-warning' data-id='" + incidents[i].ID + "'>Mark as verified</button>" + 
+                            "<button class='decline mark-as-solved btn btn-warning' data-id='" + incidents[i].ID + "'>Decline</button>" :
+                            "";
 
                         form =  "<b>Latitude: </b>" + incidents[i].Latitude + 
                                 "<br><br> <b>Longitude: </b>" + incidents[i].Longitude +
@@ -191,7 +222,9 @@ require([
                     }
 
                     map.infoWindow.setContent(form);
-                    map.infoWindow.show(evt.mapPoint);
+                    if (!isHotspot(latitude, longitude)) {
+                        map.infoWindow.show(evt.mapPoint);
+                    }
                 }
             });
         }
@@ -204,7 +237,6 @@ require([
             so2 = $('.add_so2').val();
             o3 = $('.add_o3').val();
             no2 = $('.add_no2').val();
-            console.log("Data: ", pm10, so2, o3, no2);
 
             request.post("/incidents", {
                 data: {
@@ -252,6 +284,102 @@ require([
             });
         });
 
+        $(document).on("change", "#slt_country", function(e) {
+            currentMap = document.getElementsByName("country")[0].value
+            map.destroy();
+            arcgisUtils.createMap(maps[currentMap].map, "map", {
+                mapOptions: {
+                    center: [28.0079945, 45.4353208],
+                    zoom:13
+                }}).then(function (response) {
+                //update the app
+                dom.byId("title").innerHTML = response.itemInfo.item.title;
+                dom.byId("subtitle").innerHTML = response.itemInfo.item.snippet;
+    
+                map = response.map;
+    
+                //add the scalebar
+                var scalebar = new Scalebar({
+                    map: map,
+                    scalebarUnit: "english"
+                });
+    
+                //add the legend. Note that we use the utility method getLegendLayers to get
+                //the layers to display in the legend from the createMap response.
+
+                // destroy previous legend, if present
+                if (legendDijit) {
+                    legendDijit.destroy();
+                    domConstruct.destroy(dojo.byId("legend"));
+                }
+                // create a new div for the legend
+                var legendDiv = domConstruct.create("div", {
+                    id: "legend"
+                }, dom.byId("rightPane"));
+            
+                legendLayers = arcgisUtils.getLegendLayers(response);
+
+                legendDijit= new Legend({
+                    map: map,
+                    layerInfos: legendLayers
+                }, legendDiv);
+
+                legendDijit.startup();
+
+                // if (legendDijit) legendDijit.destroyRecursive();
+    
+                // legendLayers = arcgisUtils.getLegendLayers(response);
+                // legendDijit = new Legend({
+                //     map: map,
+                //     layerInfos: legendLayers
+                // }, "legend");
+    
+                // legendDijit.startup();
+    
+                request.get("/hotspots", {
+                    handleAs: "json"
+                }).then(function(dataLocations) {
+                    for (let i = 0; i < dataLocations.length; i++) {
+                        hotspots.push(dataLocations[i]);
+                    }
+                    console.log("Hotspots: ", dataLocations)
+                })
+    
+                handleMapExtraActions(map);
+                displayAllIncidents();
+            });
+        })
+
+        $(document).on("click", ".mark-as-solved", function(e) {
+            let $el = $(e.target);
+            let id = $el.data("id");
+
+            request.post("/decline", {
+                data: {
+                    id: id
+                }
+            }).then(function(){
+
+                map.graphics.remove(lastClickedPoint);
+                $(lastClickedPoint).remove();
+                lastClickedPoint = null;
+
+                $(".esriPopup.esriPopupVisible").removeClass("esriPopupVisible").addClass("esriPopupHidden");
+            });
+        });
+
+        function isHotspot(longitude, latitude) {
+            let isHotspot = false;
+            let radius = 0.025;
+            for (let i = 0; i < hotspots.length; i++) {
+                if((latitude <= (hotspots[i].latitude + radius) && latitude >= (hotspots[i].latitude - radius))
+                            && (longitude <= (hotspots[i].longitude + radius) && longitude >= (hotspots[i].longitude - radius))) {
+                    
+                }
+            }
+            return isHotspot;
+        }
+
         function toggleNitrateLayer() {
 
             $("#legend_csv_9245_0_fc_csv_9245_0").click(function () {
@@ -293,8 +421,11 @@ require([
                 
                 let incidentPoint;
                 data.map(function(entry) {
+                    let pollutionLevel = (entry.PM10 + entry.SO2 + entry.O3 + entry.NO2) / 4;
+                    let redValue = (255 * (pollutionLevel / 10)) % 255;
+                    let greenValue = 255 - redValue;
                     incidentPoint = new Point(entry.Longitude, entry.Latitude);
-                    var symbol = new SimpleMarkerSymbol().setColor(new Color([147, 34, 201, 0.9]));
+                    var symbol = new SimpleMarkerSymbol().setColor(new Color([redValue, greenValue, 0, 1]));
                     var graphic = new Graphic(incidentPoint, symbol);
                     map.graphics.add(graphic);
                     incidents.push(entry);

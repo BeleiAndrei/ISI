@@ -166,11 +166,41 @@ app.post('/solve', (req, res) => {
     });
 });
 
+app.post('/decline', (req, res) => {
+    let data = [req.body.id];
+    let sql = `DELETE FROM Incidents
+            WHERE ID = ?`;
+
+    db.run(sql, data, function (err) {
+        if (err) {
+            res.status(500).send(err.message);
+            return;
+        }
+
+        res.status(200).json({
+            solved: true
+        });
+    });
+});
+
 app.get('/incidents', (req, res) => {
     let sql = "SELECT Incidents.ID, Incidents.Description, Incidents.Longitude, Incidents.Latitude, " +
         "Incidents.PM10, Incidents.SO2, Incidents.O3, Incidents.NO2, " + 
         "Incidents.ReportedByUserID, Incidents.Timestamp, Users.Name FROM Incidents LEFT JOIN Users " +
         "ON Incidents.ReportedByUserID=Users.ID WHERE Incidents.Solved=0";
+
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            throw err;
+        }
+
+        res.send(JSON.stringify(rows));
+    });
+});
+
+app.get('/hotspots', (req, res) => {
+    let sql = "SELECT Hotspots.ID, Hotspots.LocationName, Hotspots.Longitude, Hotspots.Latitude " +
+        "From Hotspots";
 
     db.all(sql, [], (err, rows) => {
         if (err) {
@@ -201,13 +231,13 @@ app.post('/incidents', (req, res) => {
             console.log(user.Email);
 
             let mailText = "The user " + user.Name + " marked a new polluted zone.\n\n" +
-                "It has the following description: \n\n" + description + "\n\nHave a nice day! \n" +
-                "MuresApp";
+                "It has the following description: \n\n" + description +
+                "\nPM10: " + pm10 + "\nSO2: " + so2 + "\nO3: " + o3 + "\nNO2: " + no2 + "\n\nHave a nice day! \n";
 
             let mailOptions = {
                 from: 'potato.cat001@gmail.com',
                 to: user.Email,
-                subject: '[MuresApp] Pollution Alert',
+                subject: 'New incident reported',
                 text: mailText
             };
 
@@ -242,6 +272,8 @@ function getAllUsers() {
 
 function registerIncident(description, longitude, latitude, pm10, so2, o3, no2, userID, date) {
     let stmt = db.prepare("INSERT INTO Incidents(Description, Longitude, Latitude, PM10, SO2, O3, NO2, ReportedByUserID, Timestamp) VALUES (?,?,?,?,?,?,?,?,?)");
+
+    console.log("registering incident");
 
     stmt.run([
         description,

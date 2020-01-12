@@ -32,7 +32,14 @@
 
 <!-- HEADER -->
 <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
-    <div class="container">
+    <div class="container" style="max-width: 2000px;">
+        <select size="1" id="slt_country" name="country" class="selectBox">
+            <option value="1" selected>General Pollution</option>
+            <option value="2">PM10</option>
+            <option value="3">SO2</option>
+            <option value="4">O3</option>
+            <option value="5">NO2</option>
+        </select>            
         <a class="navbar-brand js-scroll-trigger" href="/">Galati Pollution</a>
         <div class="collapse navbar-collapse" id="navbarResponsive">
             <ul class="navbar-nav ml-auto">
@@ -126,6 +133,9 @@
         <div id="subtitle"></div>
     </div>
     <div id="map" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'center'"></div>
+    <div id="rightPane" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'right'">
+        <div id="legend"></div>
+    </div>
     
 </div>
 

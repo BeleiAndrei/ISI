@@ -10,7 +10,7 @@ html, body, #border-container {
 }
 
 .titlePane {
-    background-color: #333 !important;
+    background-color: #ff9900 !important;
 }
 
 html,
@@ -50,13 +50,23 @@ body {
 
 #rightPane {
     background-color: #E8E8E8;
-    width: 20%;
-    margin-top: 42px;
+    width: 8%;
+    margin-top: 53px;
 }
 
 button.mark-as-solved.btn.btn-warning {
     margin-top: 15px;
     border-radius: 0;
+}
+
+.decline {
+    float: right;
+}
+
+.dropdown {
+    position: absolute;
+    display: inline-block;
+    left: 10px;
 }
 
 #header {
