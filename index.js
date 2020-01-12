@@ -201,13 +201,12 @@ app.post('/incidents', (req, res) => {
             console.log(user.Email);
 
             let mailText = "The user " + user.Name + " marked a new polluted zone.\n\n" +
-                "It has the following description: \n\n" + description + "\n\nHave a nice day! \n" +
-                "MuresApp";
+                "It has the following description: \n\n" + description + "\n\nHave a nice day! \n";
 
             let mailOptions = {
                 from: 'potato.cat001@gmail.com',
                 to: user.Email,
-                subject: '[MuresApp] Pollution Alert',
+                subject: 'New incident reported',
                 text: mailText
             };
 
@@ -242,6 +241,8 @@ function getAllUsers() {
 
 function registerIncident(description, longitude, latitude, pm10, so2, o3, no2, userID, date) {
     let stmt = db.prepare("INSERT INTO Incidents(Description, Longitude, Latitude, PM10, SO2, O3, NO2, ReportedByUserID, Timestamp) VALUES (?,?,?,?,?,?,?,?,?)");
+
+    console.log("registering incident");
 
     stmt.run([
         description,
