@@ -38,8 +38,8 @@ require([
 
         var map = null;
         var description = null;
-        var latitude = null;
-        var longitude = null;
+        var latitude = 45.4353208;
+        var longitude = 28.0079945;
         var submitted = false;
         let lastPoint = null,
             point = null,
@@ -55,8 +55,8 @@ require([
         //arcgisUtils.arcgisUrl = "https://pathto/portal/sharing/content/items";
         arcgisUtils.createMap("977c4613314b4055b50309181eeae14c", "map", {
             mapOptions: {
-                center: [21.655, 46.075],
-                zoom:9
+                center: [28.0079945, 45.4353208],
+                zoom:13
             }}).then(function (response) {
             //update the app
             dom.byId("title").innerHTML = response.itemInfo.item.title;
@@ -96,7 +96,7 @@ require([
 
         function handleMapExtraActions(map) {
 
-            var myPoint = new Point(21.108430175781148, 46.27374974057721);
+            var myPoint = new Point(28.0079945, 45.4353208);
             var symbol0 = new SimpleMarkerSymbol().setColor(new Color('blue'));
             var graphic = new Graphic(myPoint, symbol0);
             map.graphics.add(graphic);
@@ -117,6 +117,7 @@ require([
 
                 latitude = evt.mapPoint.getLatitude();
                 longitude = evt.mapPoint.getLongitude();
+                //console.log(latitude);
                 lastPoint = new Graphic(evt.mapPoint, symbol);
 
                 /* For checking not to interfere with existing points */
