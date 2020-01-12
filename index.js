@@ -166,6 +166,23 @@ app.post('/solve', (req, res) => {
     });
 });
 
+app.post('/decline', (req, res) => {
+    let data = [req.body.id];
+    let sql = `DELETE FROM Incidents
+            WHERE ID = ?`;
+
+    db.run(sql, data, function (err) {
+        if (err) {
+            res.status(500).send(err.message);
+            return;
+        }
+
+        res.status(200).json({
+            solved: true
+        });
+    });
+});
+
 app.get('/incidents', (req, res) => {
     let sql = "SELECT Incidents.ID, Incidents.Description, Incidents.Longitude, Incidents.Latitude, " +
         "Incidents.PM10, Incidents.SO2, Incidents.O3, Incidents.NO2, " + 

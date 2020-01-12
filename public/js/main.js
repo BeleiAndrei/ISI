@@ -49,12 +49,35 @@ require([
         let incidents = [];
         var limits = [];
         var allPoints = [];
+        let currentMap = 0
+        var maps = [
+            {
+                description: 'Level of pollution',
+                map: '81138e27937b44d1a5b009fa63f2233c'
+            },
+            {
+                description: 'PM10',
+                map: '81138e27937b44d1a5b009fa63f2233c'
+            },
+            {
+                description: 'SO2',
+                map: '81138e27937b44d1a5b009fa63f2233c'
+            },
+            {
+                description: 'O3',
+                map: '81138e27937b44d1a5b009fa63f2233c'
+            },
+            {
+                description: 'NO2',
+                map: '81138e27937b44d1a5b009fa63f2233c'
+            }
+        ]
 
         parser.parse();
 
         //if accessing webmap from a portal outside of ArcGIS Online, uncomment and replace path with portal URL
         //arcgisUtils.arcgisUrl = "https://pathto/portal/sharing/content/items";
-        arcgisUtils.createMap("81138e27937b44d1a5b009fa63f2233c", "map", {
+        arcgisUtils.createMap(maps[0].map, "map", {
             mapOptions: {
                 center: [28.0079945, 45.4353208],
                 zoom:13
@@ -79,7 +102,7 @@ require([
                 map: map,
                 layerInfos: legendLayers
             }, "legend");
-            
+
             legendDijit.startup();
 
             request.get("/hotspots", {
@@ -180,8 +203,10 @@ require([
                     if (ok === true) {
 
                         var isAdmin = $("#user_logout").data("isadmin");
-                        var markAsSolvedButton = isAdmin ? "<button class='mark-as-solved btn btn-warning' data-id='" + incidents[i].ID +
-                            "'>Mark as verified</button>" : "";
+                        var markAsSolvedButton = isAdmin ? 
+                            "<button class='mark-as-solved btn btn-warning' data-id='" + incidents[i].ID + "'>Mark as verified</button>" + 
+                            "<button class='decline mark-as-solved btn btn-warning' data-id='" + incidents[i].ID + "'>Decline</button>" :
+                            "";
 
                         form =  "<b>Latitude: </b>" + incidents[i].Latitude + 
                                 "<br><br> <b>Longitude: </b>" + incidents[i].Longitude +
@@ -254,6 +279,41 @@ require([
             let id = $el.data("id");
 
             request.post("/solve", {
+                data: {
+                    id: id
+                }
+            }).then(function(){
+
+                map.graphics.remove(lastClickedPoint);
+                $(lastClickedPoint).remove();
+                lastClickedPoint = null;
+
+                $(".esriPopup.esriPopupVisible").removeClass("esriPopupVisible").addClass("esriPopupHidden");
+            });
+        });
+
+        $(document).on("change", "#slt_country", function(e) {
+            //Get select object
+            // var objSelect = document.getElementById("Mobility");
+            
+            // //Set selected
+            // setSelectedValue(objSelect, "10");
+            console.log(document.getElementsByName("country")[0].value)
+            // function setSelectedValue(selectObj, valueToSet) {
+            //     for (var i = 0; i < selectObj.options.length; i++) {
+            //         if (selectObj.options[i].text== valueToSet) {
+            //             selectObj.options[i].selected = true;
+            //             return;
+            //         }
+            //     }
+            // }
+        })
+
+        $(document).on("click", ".mark-as-solved", function(e) {
+            let $el = $(e.target);
+            let id = $el.data("id");
+
+            request.post("/decline", {
                 data: {
                     id: id
                 }

@@ -59,6 +59,16 @@ button.mark-as-solved.btn.btn-warning {
     border-radius: 0;
 }
 
+.decline {
+    float: right;
+}
+
+.dropdown {
+    position: absolute;
+    display: inline-block;
+    left: 10px;
+}
+
 #header {
     display: none;
 }
