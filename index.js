@@ -168,6 +168,7 @@ app.post('/solve', (req, res) => {
 
 app.get('/incidents', (req, res) => {
     let sql = "SELECT Incidents.ID, Incidents.Description, Incidents.Longitude, Incidents.Latitude, " +
+        "Incidents.PM10, Incidents.SO2, Incidents.O3, Incidents.NO2, " + 
         "Incidents.ReportedByUserID, Incidents.Timestamp, Users.Name FROM Incidents LEFT JOIN Users " +
         "ON Incidents.ReportedByUserID=Users.ID WHERE Incidents.Solved=0";
 
@@ -185,10 +186,14 @@ app.post('/incidents', (req, res) => {
     let description = req.body.description;
     let longitude = req.body.longitude;
     let latitude = req.body.latitude;
+    let pm10 = req.body.pm10;
+    let so2 = req.body.so2;
+    let o3 = req.body.o3;
+    let no2 = req.body.no2;
     let userID = req.session.user.id || 4;
     let date = moment().format('LLLL');
 
-    registerIncident(description, longitude, latitude, userID, date);
+    registerIncident(description, longitude, latitude, pm10, so2, o3, no2, userID, date);
 
 
     getAllUsers().then((data) => {
@@ -235,13 +240,17 @@ function getAllUsers() {
 
 }
 
-function registerIncident(description, longitude, latitude, userID, date) {
-    let stmt = db.prepare("INSERT INTO Incidents(Description, Longitude, Latitude, ReportedByUserID, Timestamp) VALUES (?,?,?,?,?)");
+function registerIncident(description, longitude, latitude, pm10, so2, o3, no2, userID, date) {
+    let stmt = db.prepare("INSERT INTO Incidents(Description, Longitude, Latitude, PM10, SO2, O3, NO2, ReportedByUserID, Timestamp) VALUES (?,?,?,?,?,?,?,?,?)");
 
     stmt.run([
         description,
         longitude,
         latitude,
+        pm10,
+        so2,
+        o3,
+        no2,
         userID,
         date
     ]);
