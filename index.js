@@ -181,6 +181,19 @@ app.get('/incidents', (req, res) => {
     });
 });
 
+app.get('/hotspots', (req, res) => {
+    let sql = "SELECT Hotspots.ID, Hotspots.LocationName, Hotspots.Longitude, Hotspots.Latitude " +
+        "From Hotspots";
+
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            throw err;
+        }
+
+        res.send(JSON.stringify(rows));
+    });
+});
+
 app.post('/incidents', (req, res) => {
 
     let description = req.body.description;

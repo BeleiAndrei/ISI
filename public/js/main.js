@@ -45,6 +45,7 @@ require([
             point = null,
             lastClickedPoint = null;
         var issues = [];
+        let hotspots = [];
         let incidents = [];
         var limits = [];
         var allPoints = [];
@@ -72,12 +73,22 @@ require([
 
             //add the legend. Note that we use the utility method getLegendLayers to get
             //the layers to display in the legend from the createMap response.
+
             var legendLayers = arcgisUtils.getLegendLayers(response);
-            // var legendDijit = new Legend({
-            //     map: map,
-            //     layerInfos: legendLayers
-            // }, "legend");
-            // legendDijit.startup();
+            var legendDijit = new Legend({
+                map: map,
+                layerInfos: legendLayers
+            }, "legend");
+            legendDijit.startup();
+
+            request.get("/hotspots", {
+                handleAs: "json"
+            }).then(function(dataLocations) {
+                for (let i = 0; i < dataLocations.length; i++) {
+                    hotspots.push(dataLocations[i]);
+                }
+                console.log("Hotspots: ", dataLocations)
+            })
 
             handleMapExtraActions(map);
             displayAllIncidents();
@@ -146,7 +157,9 @@ require([
                                "</form> ";
 
                     map.infoWindow.setContent(form);
-                    map.infoWindow.show(evt.mapPoint);
+                    if (!isHotspot(latitude, longitude)) {
+                        map.infoWindow.show(evt.mapPoint);
+                    }
                 }
 
                 var customLayer = $("#map_graphics_layer circle");
@@ -155,8 +168,8 @@ require([
                     var ok = false;
                     var i = 0;
                     for (i = 0; i < incidents.length; i++) {
-                        if((incidents[i].Latitude <= (latitude + 0.013) && incidents[i].Latitude >= (latitude - 0.013))
-                            && (incidents[i].Longitude <= (longitude + 0.013) && incidents[i].Longitude >= (longitude - 0.013))) {
+                        if((incidents[i].Latitude <= (latitude + 0.003) && incidents[i].Latitude >= (latitude - 0.003))
+                            && (incidents[i].Longitude <= (longitude + 0.003) && incidents[i].Longitude >= (longitude - 0.003))) {
                             ok = true;
                             break;
                         }
@@ -191,7 +204,9 @@ require([
                     }
 
                     map.infoWindow.setContent(form);
-                    map.infoWindow.show(evt.mapPoint);
+                    if (!isHotspot(latitude, longitude)) {
+                        map.infoWindow.show(evt.mapPoint);
+                    }
                 }
             });
         }
@@ -252,6 +267,18 @@ require([
             });
         });
 
+        function isHotspot(longitude, latitude) {
+            let isHotspot = false;
+            let radius = 0.025;
+            for (let i = 0; i < hotspots.length; i++) {
+                if((latitude <= (hotspots[i].latitude + radius) && latitude >= (hotspots[i].latitude - radius))
+                            && (longitude <= (hotspots[i].longitude + radius) && longitude >= (hotspots[i].longitude - radius))) {
+                    
+                }
+            }
+            return isHotspot;
+        }
+
         function toggleNitrateLayer() {
 
             $("#legend_csv_9245_0_fc_csv_9245_0").click(function () {
@@ -293,8 +320,11 @@ require([
                 
                 let incidentPoint;
                 data.map(function(entry) {
+                    let pollutionLevel = (entry.PM10 + entry.SO2 + entry.O3 + entry.NO2) / 4;
+                    let redValue = (255 * (pollutionLevel / 10)) % 255;
+                    let greenValue = 255 - redValue;
                     incidentPoint = new Point(entry.Longitude, entry.Latitude);
-                    var symbol = new SimpleMarkerSymbol().setColor(new Color([147, 34, 201, 0.9]));
+                    var symbol = new SimpleMarkerSymbol().setColor(new Color([redValue, greenValue, 0, 1]));
                     var graphic = new Graphic(incidentPoint, symbol);
                     map.graphics.add(graphic);
                     incidents.push(entry);
