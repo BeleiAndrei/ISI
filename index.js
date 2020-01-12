@@ -201,7 +201,8 @@ app.post('/incidents', (req, res) => {
             console.log(user.Email);
 
             let mailText = "The user " + user.Name + " marked a new polluted zone.\n\n" +
-                "It has the following description: \n\n" + description + "\n\nHave a nice day! \n";
+                "It has the following description: \n\n" + description +
+                "\nPM10: " + pm10 + "\nSO2: " + so2 + "\nO3: " + o3 + "\nNO2: " + no2 + "\n\nHave a nice day! \n";
 
             let mailOptions = {
                 from: 'potato.cat001@gmail.com',
