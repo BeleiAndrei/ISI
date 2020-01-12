@@ -53,7 +53,7 @@ require([
 
         //if accessing webmap from a portal outside of ArcGIS Online, uncomment and replace path with portal URL
         //arcgisUtils.arcgisUrl = "https://pathto/portal/sharing/content/items";
-        arcgisUtils.createMap("977c4613314b4055b50309181eeae14c", "map", {
+        arcgisUtils.createMap("81138e27937b44d1a5b009fa63f2233c", "map", {
             mapOptions: {
                 center: [28.0079945, 45.4353208],
                 zoom:13
@@ -73,11 +73,11 @@ require([
             //add the legend. Note that we use the utility method getLegendLayers to get
             //the layers to display in the legend from the createMap response.
             var legendLayers = arcgisUtils.getLegendLayers(response);
-            var legendDijit = new Legend({
-                map: map,
-                layerInfos: legendLayers
-            }, "legend");
-            legendDijit.startup();
+            // var legendDijit = new Legend({
+            //     map: map,
+            //     layerInfos: legendLayers
+            // }, "legend");
+            // legendDijit.startup();
 
             handleMapExtraActions(map);
             displayAllIncidents();
@@ -113,7 +113,6 @@ require([
             toggleRefinedLayer();
 
             map.on("click", function(evt){
-                console.log(incidents);
 
                 latitude = evt.mapPoint.getLatitude();
                 longitude = evt.mapPoint.getLongitude();
@@ -130,7 +129,21 @@ require([
                 if (!isInFirstLayer) {
 
                     if (!isAuthenticated()) return;
-                    var form = "<b>Latitude: </b>" + latitude + "<br><br> <b>Longitude: </b>" + longitude + "<br><br><form id='add_point'> Describe issue:<br><input type=" + "'text'" + "class='add_issue'" + "name=" + "'describe'" + "><br><br><input type=" + "'submit'" + " class='submit-incident' value=" + "'Submit'" + "></form> ";
+                    var form = "<b>Latitude: </b>" + latitude + 
+                               "<br><br> <b>Longitude: </b>" + longitude + 
+                               "<br><br><form id='add_point'> "+
+                                    "Describe issue:<br>" + 
+                                        "<input type=" + "'text'" + "class='add_issue add_description'" + "name=" + "'describe'" + "><br><br>" +
+                                    "PM10 level:<br>" +
+                                        "<input type=" + "'text'" + "class='add_issue add_pm10'" + "name=" + "'pm10'" + "><br><br>" + 
+                                    "SO2 level:<br>" +
+                                        "<input type=" + "'text'" + "class='add_issue add_so2'" + "name=" + "'so2'" + "><br><br>" + 
+                                    "O3 level:<br>" +
+                                        "<input type=" + "'text'" + "class='add_issue add_o3'" + "name=" + "'o3'" + "><br><br>" + 
+                                    "NO2 level:<br>" +
+                                        "<input type=" + "'text'" + "class='add_issue add_no2'" + "name=" + "'no2'" + ">" + 
+                                    "<br><br><input type=" + "'submit'" + " class='submit-incident' value=" + "'Submit'" + ">" + 
+                               "</form> ";
 
                     map.infoWindow.setContent(form);
                     map.infoWindow.show(evt.mapPoint);
@@ -154,13 +167,17 @@ require([
 
                         var isAdmin = $("#user_logout").data("isadmin");
                         var markAsSolvedButton = isAdmin ? "<button class='mark-as-solved btn btn-warning' data-id='" + incidents[i].ID +
-                            "'>Mark as solved</button>" : "";
+                            "'>Mark as verified</button>" : "";
 
-                        form = "<b>Latitude: </b>" + incidents[i].Latitude + "<br><br> <b>Longitude: </b>" +
-                            incidents[i].Longitude + "<br><br>  <b>Reporter: </b>" + incidents[i].Name + "</b>" +
-                            "<br><br>  <b>Issue Description: </b>" + incidents[i].Description + "</b>" +
-                            "<br><br> <b>Added: </b>" + incidents[i].Timestamp+ "</b><br>" +
-                            markAsSolvedButton;
+                        form =  "<b>Latitude: </b>" + incidents[i].Latitude + 
+                                "<br><br> <b>Longitude: </b>" + incidents[i].Longitude +
+                                "<br><br> <b>PM10 Level: </b>" + incidents[i].PM10 +
+                                "<br><br> <b>SO2 Level: </b>" + incidents[i].SO2 + 
+                                "<br><br> <b>O3 Level: </b>" + incidents[i].O3 +
+                                "<br><br> <b>NO2 Level: </b>" + incidents[i].NO2 +
+                                "<br><br>  <b>Reporter: </b>" + incidents[i].Name + "</b>" +
+                                "<br><br>  <b>Issue Description: </b>" + incidents[i].Description + "</b>" +
+                                "<br><br> <b>Added: </b>" + incidents[i].Timestamp+ "</b><br>" + markAsSolvedButton;
 
                         lastClickedPoint = evt.target;
                     } else if((limits[0].latitude <= (latitude + 0.013) && limits[0].latitude >= (latitude - 0.013))
@@ -182,19 +199,32 @@ require([
         $(document).on("click", ".submit-incident", function(e) {
             e.preventDefault();
 
-            description = $('.add_issue').val();
+            description = $('.add_description').val();
+            pm10 = $('.add_pm10').val();
+            so2 = $('.add_so2').val();
+            o3 = $('.add_o3').val();
+            no2 = $('.add_no2').val();
+            console.log("Data: ", pm10, so2, o3, no2);
 
             request.post("/incidents", {
                 data: {
                     description: description,
                     longitude: longitude,
-                    latitude: latitude
+                    latitude: latitude,
+                    pm10: pm10,
+                    so2: so2,
+                    o3: o3,
+                    no2: no2
                 }
             }).then(function(text){
                 incidents.push({
                     Description: description,
                     Longitude: longitude,
                     Latitude: latitude,
+                    PM10: pm10,
+                    SO2: so2,
+                    O3: o3,
+                    NO2: no2,
                     Name: $("#user_logout").data("username")
                 });
 
@@ -260,14 +290,13 @@ require([
             request.get("/incidents", {
                 handleAs: "json"
             }).then(function(data){
-
+                
                 let incidentPoint;
                 data.map(function(entry) {
                     incidentPoint = new Point(entry.Longitude, entry.Latitude);
-                    var symbol = new SimpleMarkerSymbol().setColor(new Color('red'));
+                    var symbol = new SimpleMarkerSymbol().setColor(new Color([147, 34, 201, 0.9]));
                     var graphic = new Graphic(incidentPoint, symbol);
                     map.graphics.add(graphic);
-
                     incidents.push(entry);
                     allPoints.push(graphic);
                 });

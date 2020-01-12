@@ -141,7 +141,7 @@ require([
                     var symbol = new SimpleMarkerSymbol().setColor(new Color('green'));
                     var graphic = new Graphic(myPoint, symbol);
                     map.graphics.add(graphic);
-                    stationss.push(myPoint);
+                    stations.push(myPoint);
                 });
             },
             function(error){
