@@ -8,6 +8,6 @@
 
 **Team**
 -
-Dobroteanu Andreea   
-Mitroi Madalina   
-Moisa Anca-Elena   
+Belei Andrei
+Scinteie Sebastian
+Irimia Tudor Catalin

@@ -228,26 +228,27 @@ app.post('/incidents', (req, res) => {
 
     getAllUsers().then((data) => {
         data.map((user) => {
-            console.log(user.Email);
+            
+            if (user.IsAdmin) {
+                let mailText = "The user " + user.Name + " marked a new polluted zone.\n\n" +
+                    "It has the following description: \n\n" + description +
+                    "\nPM10: " + pm10 + "\nSO2: " + so2 + "\nO3: " + o3 + "\nNO2: " + no2 + "\n\nHave a nice day! \n";
 
-            let mailText = "The user " + user.Name + " marked a new polluted zone.\n\n" +
-                "It has the following description: \n\n" + description +
-                "\nPM10: " + pm10 + "\nSO2: " + so2 + "\nO3: " + o3 + "\nNO2: " + no2 + "\n\nHave a nice day! \n";
+                let mailOptions = {
+                    from: 'potato.cat001@gmail.com',
+                    to: user.Email,
+                    subject: 'New incident reported',
+                    text: mailText
+                };
 
-            let mailOptions = {
-                from: 'potato.cat001@gmail.com',
-                to: user.Email,
-                subject: 'New incident reported',
-                text: mailText
-            };
-
-            transporter.sendMail(mailOptions, function (error, info) {
-                if (error) {
-                    console.log(error);
-                } else {
-                    console.log('Email sent!');
-                }
-            });
+                transporter.sendMail(mailOptions, function (error, info) {
+                    if (error) {
+                        console.log(error);
+                    } else {
+                        console.log('Email sent!');
+                    }
+                });
+            }
         });
     });
 
