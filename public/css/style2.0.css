@@ -31,6 +31,10 @@
     overflow:hidden;
     background:#cccccc;
     border:1px solid #cccccc;
+    height: 30px;
+    font-size: 17px;
+    width: 160px;
+    text-align: center; 
 }
 
 #mainNav .navbar-brand {

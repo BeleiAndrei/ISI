@@ -115,7 +115,6 @@ require([
                 for (let i = 0; i < dataLocations.length; i++) {
                     hotspots.push(dataLocations[i]);
                 }
-                console.log("Hotspots: ", dataLocations)
             })
 
             handleMapExtraActions(map);
@@ -172,8 +171,10 @@ require([
                                     "<br><br><input type=" + "'submit'" + " class='submit-incident' value=" + "'Submit'" + ">" + 
                                "</form> ";
 
-                    map.infoWindow.setContent(form);
+
+
                     if (!isHotspot(latitude, longitude)) {
+                        map.infoWindow.setContent(form);
                         map.infoWindow.show(evt.mapPoint);
                     }
                 }
@@ -221,8 +222,8 @@ require([
                         form = "<b>Latitude: </b>" + limits[1].latitude + "<br><br> <b>Longitude: </b>" + limits[1].longitude + "<br><br>  <b><u>Location:</u> </b><i>" + limits[1].name + "</i></b>";
                     }
 
-                    map.infoWindow.setContent(form);
                     if (!isHotspot(latitude, longitude)) {
+                        map.infoWindow.setContent(form);
                         map.infoWindow.show(evt.mapPoint);
                     }
                 }
@@ -325,16 +326,6 @@ require([
                 }, legendDiv);
 
                 legendDijit.startup();
-
-                // if (legendDijit) legendDijit.destroyRecursive();
-    
-                // legendLayers = arcgisUtils.getLegendLayers(response);
-                // legendDijit = new Legend({
-                //     map: map,
-                //     layerInfos: legendLayers
-                // }, "legend");
-    
-                // legendDijit.startup();
     
                 request.get("/hotspots", {
                     handleAs: "json"
@@ -342,7 +333,6 @@ require([
                     for (let i = 0; i < dataLocations.length; i++) {
                         hotspots.push(dataLocations[i]);
                     }
-                    console.log("Hotspots: ", dataLocations)
                 })
     
                 handleMapExtraActions(map);
@@ -368,13 +358,19 @@ require([
             });
         });
 
-        function isHotspot(longitude, latitude) {
+        function isHotspot(latitude, longitude) {
             let isHotspot = false;
-            let radius = 0.025;
+            let radius = 0.003;
             for (let i = 0; i < hotspots.length; i++) {
-                if((latitude <= (hotspots[i].latitude + radius) && latitude >= (hotspots[i].latitude - radius))
-                            && (longitude <= (hotspots[i].longitude + radius) && longitude >= (hotspots[i].longitude - radius))) {
-                    
+                // if(((hotspots[i].latitude + radius) >= latitude && (hotspots[i].latitude - radius) <= latitude)
+                //             && ((hotspots[i].longitude + radius) >= longitude && (hotspots[i].longitude - radius) <= longitude))
+                let latitudePow2 = (latitude - hotspots[i].Latitude) * (latitude - hotspots[i].Latitude);
+                let longitudePow2 = ((longitude - hotspots[i].Longitude) * (longitude - hotspots[i].Longitude));
+                let radiusPow2 = (radius * radius);
+                let coordinatesSum = latitudePow2 + longitudePow2
+                if (coordinatesSum <= radiusPow2) {
+                    isHotspot = true;
+                    break;
                 }
             }
             return isHotspot;
